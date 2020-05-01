@@ -1,0 +1,23 @@
+sudo: required
+services:
+    - docker
+
+before_install:
+    - docker build -t emarinos/multi-docker-file -f ./client/Dockerfile.dev ./client
+
+script:
+    - docker run -e CI=true emarinos/multi-docker-test npm test -- --coverage
+
+after_success:
+    - docker build -t emarinos/multi-docker-client ./client
+    - docker build -t emarinos/multi-docker-server ./server
+    - docker build -t emarinos/multi-docker-worker ./worker
+    - docker build -t emarinos/multi-docker-nginx ./nginx
+    # First login to Docker CLI
+    - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+    # Push images to Docker hub
+    - docker push emarinos/multi-docker-client
+    - docker push emarinos/multi-docker-server
+    - docker push emarinos/multi-docker-worker
+    - docker push emarinos/multi-docker-nginx
+    
